@@ -235,3 +235,47 @@ func pickWinner(){
   mutex.Unlock()
 }
 //We pick a winner every 30 seconds to give time for each validator to propose a new block.
+
+func main() {
+  err := godotenv.Load()
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  //create genesis block
+  t := time.Now()
+  genesisBlock := Block{}
+  genesisBlock = Block{0, t.String(0), 0, calculateBlockHash(genesisBlock), "Bailout for banks.", ""}
+  spew.Dump(genesisBlock)
+  Blockchain = append(Blockchain, genesisBlock)
+
+  //start TCP and server TCP server
+  server, err := net.Listen("tcp", ":"+os.Getenv("ADDR"))
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer server.Close()
+
+  go func() {
+    for candidate := range candidateBlocks {
+      mutex.Lock()
+      tempBlocks = append(tempBlocksm, candidate)
+      mutex.Unlock()
+    }
+  }()
+
+  go func() {
+    for {
+      pickWinner()
+    } 
+  }()
+
+  for {
+    conn, err := server.Accept()
+    if err != nil {
+      log.Fatal(err)
+    }
+
+    go handleConn(conn)
+  }
+}
