@@ -51,7 +51,7 @@ var validators = make(map[string]int)
 func calculateHash(s string) string {
   h := sha256.New()
   h.Write([]byte(s))
-  hashed := h.sum(nil)
+  hashed := h.Sum(nil)
   
   return hex.EncodeToString(hashed)
 }
@@ -108,7 +108,7 @@ func handleConn(conn net.Conn){
   }()
 
   //validator address
-  var adress string
+  var address string
 
   //allow user to allocate number of tokens to stake
   //the grater the number of tokens, the greater chance for forging a new block.
@@ -179,7 +179,7 @@ func handleConn(conn net.Conn){
 
 //pickWinner creates a lottery pool of validators and chooses the validator who gets to forge a block to blockchain by random selecting from the pool, weighted by amount of tokens staked.
 func pickWinner(){
-  times.Sleep(30 * time.Second)
+  time.Sleep(30 * time.Second)
   mutex.Lock()
   temp := tempBlocks
   mutex.Unlock()
@@ -231,7 +231,7 @@ func pickWinner(){
   }
 
   mutex.Lock()
-  tempBlocks = []block{}
+  tempBlocks = []Block{}
   mutex.Unlock()
 }
 //We pick a winner every 30 seconds to give time for each validator to propose a new block.
@@ -245,7 +245,7 @@ func main() {
   //create genesis block
   t := time.Now()
   genesisBlock := Block{}
-  genesisBlock = Block{0, t.String(0), 0, calculateBlockHash(genesisBlock), "Bailout for banks.", ""}
+  genesisBlock = Block{0, t.String(), 0, calculateBlockHash(genesisBlock), "", ""}
   spew.Dump(genesisBlock)
   Blockchain = append(Blockchain, genesisBlock)
 
@@ -259,7 +259,7 @@ func main() {
   go func() {
     for candidate := range candidateBlocks {
       mutex.Lock()
-      tempBlocks = append(tempBlocksm, candidate)
+      tempBlocks = append(tempBlocks, candidate)
       mutex.Unlock()
     }
   }()
@@ -279,3 +279,6 @@ func main() {
     go handleConn(conn)
   }
 }
+
+//For now:
+//Add full peer-to-peer capability. This would basically mean each validator would run its own TCP server as well as connecting to others. We would need to add in logic so each node can find each other. Read more about this here.
